@@ -23,18 +23,29 @@ const getUserById = userId => {
 
 export const App = () => {
   const [selectedUserId, setSelectedUserId] = useState(null);
+  const [searchQuery, setSearchQuery] = useState('');
 
-  const handleUserFilterChange = (userId) => {
+  const handleUserFilterChange = userId => {
     setSelectedUserId(userId === selectedUserId ? null : userId);
   };
 
-  const filteredProducts = selectedUserId
-    ? productsFromServer.filter(product => {
-        const category = getCategoryById(product.categoryId);
+  const handleSearchChange = event => {
+    setSearchQuery(event.target.value);
+  };
 
-        return category.ownerId === selectedUserId;
-      })
-    : productsFromServer;
+  const handleClearSearch = () => {
+    setSearchQuery('');
+  };
+
+  const filteredProducts = productsFromServer
+    .filter(product => {
+      const category = getCategoryById(product.categoryId);
+
+      return !selectedUserId || category.ownerId === selectedUserId;
+    })
+    .filter(product =>
+      product.name.toLowerCase().includes(searchQuery.toLowerCase()),
+    );
 
   const renderProductsTable = () => {
     if (filteredProducts.length === 0) {
@@ -55,7 +66,9 @@ export const App = () => {
             {product.id}
           </td>
           <td data-cy="ProductName">{product.name}</td>
-          <td data-cy="ProductCategory">{category.icon} - {category.title}</td>
+          <td data-cy="ProductCategory">
+            {category.icon} - {category.title}
+          </td>
           <td
             data-cy="ProductUser"
             className={user.sex === 'm' ? 'has-text-link' : 'has-text-danger'}
@@ -105,21 +118,23 @@ export const App = () => {
                   type="text"
                   className="input"
                   placeholder="Search"
-                  value="qwe"
+                  value={searchQuery}
+                  onChange={handleSearchChange}
                 />
 
                 <span className="icon is-left">
                   <i className="fas fa-search" aria-hidden="true" />
                 </span>
-
-                <span className="icon is-right">
-                  {/* eslint-disable-next-line jsx-a11y/control-has-associated-label */}
-                  <button
-                    data-cy="ClearButton"
-                    type="button"
-                    className="delete"
-                  />
-                </span>
+                {searchQuery && (
+                  <span className="icon is-right">
+                    <button
+                      data-cy="ClearButton"
+                      type="button"
+                      className="delete"
+                      onClick={handleClearSearch}
+                    />
+                  </span>
+                )}
               </p>
             </div>
 
@@ -219,7 +234,7 @@ export const App = () => {
                       <span className="icon">
                         <i data-cy="SortIcon" className="fas fa-sort" />
                       </span>
-                  </a>
+                    </a>
                   </span>
                 </th>
               </tr>
